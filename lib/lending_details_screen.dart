@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:myapp/models/account.dart';
 import 'package:myapp/models/loan_transaction.dart';
 import 'package:myapp/providers/account_provider.dart';
 import 'package:myapp/providers/loan_provider.dart';
