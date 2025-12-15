@@ -1,7 +1,11 @@
+import 'package:json_annotation/json_annotation.dart';
 import 'package:myapp/models/expense.dart';
+
+part 'transaction.g.dart';
 
 enum TransactionType { income, expense }
 
+@JsonSerializable()
 class Transaction implements Expense {
   final String id;
   @override
@@ -24,4 +28,7 @@ class Transaction implements Expense {
     required this.accountId,
     String? category,
   }) : category = category ?? 'Other';
+
+  factory Transaction.fromJson(Map<String, dynamic> json) => _$TransactionFromJson(json);
+  Map<String, dynamic> toJson() => _$TransactionToJson(this);
 }

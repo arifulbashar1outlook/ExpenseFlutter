@@ -20,6 +20,17 @@ class AccountProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  void editAccount(String id, String newName) {
+    final account = findById(id);
+    account.name = newName;
+    notifyListeners();
+  }
+
+  void deleteAccount(String id) {
+    _accounts.removeWhere((acc) => acc.id == id);
+    notifyListeners();
+  }
+
   void updateBalance(String accountId, double amount, bool isIncome) {
     final account = findById(accountId);
     if (isIncome) {

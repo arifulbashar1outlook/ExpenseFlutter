@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "667727691442",
+    "firebase_url": "https://expenseflutter-ccb20-default-rtdb.firebaseio.com",
+    "project_id": "expenseflutter-ccb20",
+    "storage_bucket": "expenseflutter-ccb20.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:667727691442:android:b92641db4889e0296553ab",
+        "android_client_info": {
+          "package_name": "com.example.myapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC1cadi1of8TiIiVr3rr91VmgjmVvPmpG0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,71 +1,162 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:myapp/models/account.dart';
+import 'package:myapp/models/bazar_item.dart';
 import 'package:myapp/models/expense.dart';
 import 'package:myapp/models/transaction.dart';
 import 'package:myapp/providers/account_provider.dart';
 import 'package:myapp/providers/bazar_provider.dart';
 import 'package:myapp/providers/transaction_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:collection/collection.dart';
 
-class FullMonthlyReportScreen extends StatelessWidget {
+class FullMonthlyReportScreen extends StatefulWidget {
   const FullMonthlyReportScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final accountProvider = Provider.of<AccountProvider>(context);
-    final transactionProvider = Provider.of<TransactionProvider>(context);
-    final bazarProvider = Provider.of<BazarProvider>(context);
+  State<FullMonthlyReportScreen> createState() =>
+      _FullMonthlyReportScreenState();
+}
 
-    final totalIncome = transactionProvider.totalIncome;
-    final totalExpense = transactionProvider.totalExpense + bazarProvider.totalCost;
-    final netFlow = totalIncome - totalExpense;
+class _FullMonthlyReportScreenState extends State<FullMonthlyReportScreen> {
+  DateTime _selectedMonth = DateTime.now();
 
-    final List<Expense> allExpenses = [
-      ...transactionProvider.transactions.where((t) => t.type == TransactionType.expense),
-      ...bazarProvider.items
-    ];
-    allExpenses.sort((a, b) => b.date.compareTo(a.date));
+  void _changeMonth(int increment) {
+    setState(() {
+      _selectedMonth = DateTime(
+        _selectedMonth.year,
+        _selectedMonth.month + increment,
+        1,
+      );
+    });
+  }
 
-    final categorizedExpenses = <String, List<Expense>>{};
-    for (var expense in allExpenses) {
-      final category = expense.category;
-      if (categorizedExpenses[category] == null) {
-        categorizedExpenses[category] = [];
-      }
-      categorizedExpenses[category]!.add(expense);
+  String _getExpenseTitle(Expense expense) {
+    if (expense is Transaction) {
+      return expense.title;
+    } else if (expense is BazarItem) {
+      return expense.name;
     }
+    return 'Unnamed Expense';
+  }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Full Monthly Report'),
+  void _showEditDeleteDialog(Expense expense) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(_getExpenseTitle(expense)),
+        content: const Text('Would you like to edit or delete this item?'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.more_vert),
-            onPressed: () {},
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              if (expense is Transaction) {
+                // _showEditTransactionDialog(expense);
+              } else if (expense is BazarItem) {
+                // _showEditBazarItemDialog(expense);
+              }
+            },
+            child: const Text('Edit'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _showDeleteConfirmationDialog(expense);
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Delete'),
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildMonthSelector(),
-              const SizedBox(height: 20),
-              const Text('END OF MONTH STATUS', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
-              const SizedBox(height: 10),
-              _buildAccountStatusGrid(accountProvider),
-              const SizedBox(height: 20),
-              const Text('MONTHLY FLOW', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
-              const SizedBox(height: 10),
-              _buildMonthlyFlow(totalIncome, totalExpense, netFlow),
-              const SizedBox(height: 20),
-              const Text('CATEGORICAL BREAKDOWN', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
-              const SizedBox(height: 10),
-              _buildCategoricalBreakdown(categorizedExpenses),
-            ],
+    );
+  }
+
+  void _showDeleteConfirmationDialog(Expense expense) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Item'),
+        content: const Text('Are you sure you want to delete this item?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
           ),
+          ElevatedButton(
+            onPressed: () {
+              if (expense is Transaction) {
+                Provider.of<TransactionProvider>(
+                  context,
+                  listen: false,
+                ).deleteTransaction(expense.id);
+              } else if (expense is BazarItem) {
+                Provider.of<BazarProvider>(
+                  context,
+                  listen: false,
+                ).deleteItem(expense);
+              }
+              Navigator.of(context).pop();
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final transactionProvider = Provider.of<TransactionProvider>(context);
+    final bazarProvider = Provider.of<BazarProvider>(context);
+    final accountProvider = Provider.of<AccountProvider>(context);
+
+    final monthlyTransactions = transactionProvider.transactions
+        .where(
+          (t) =>
+              t.date.month == _selectedMonth.month &&
+              t.date.year == _selectedMonth.year,
+        )
+        .toList();
+
+    final monthlyBazarItems = bazarProvider.items
+        .where(
+          (i) =>
+              i.date.month == _selectedMonth.month &&
+              i.date.year == _selectedMonth.year,
+        )
+        .toList();
+
+    return Scaffold(
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildMonthSelector(),
+            const SizedBox(height: 20),
+            const Text(
+              'Account Status',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            _buildAccountStatus(accountProvider.accounts),
+            const SizedBox(height: 20),
+            const Text(
+              'Monthly Flow',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            _buildMonthlyFlowCards(monthlyTransactions, monthlyBazarItems),
+            const SizedBox(height: 20),
+            const Text(
+              'Expense Breakdown',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            _buildExpenseBreakdown(monthlyTransactions, monthlyBazarItems),
+          ],
         ),
       ),
     );
@@ -75,99 +166,223 @@ class FullMonthlyReportScreen extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        IconButton(icon: const Icon(Icons.arrow_back_ios, size: 16), onPressed: () {}),
-        Text(DateFormat('MMMM yyyy').format(DateTime.now()), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-        IconButton(icon: const Icon(Icons.arrow_forward_ios, size: 16), onPressed: () {}),
+        IconButton(
+          icon: const Icon(Icons.arrow_back_ios),
+          onPressed: () => _changeMonth(-1),
+        ),
+        Text(
+          DateFormat.yMMMM().format(_selectedMonth),
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        IconButton(
+          icon: const Icon(Icons.arrow_forward_ios),
+          onPressed: () => _changeMonth(1),
+        ),
       ],
     );
   }
 
-  Widget _buildAccountStatusGrid(AccountProvider accountProvider) {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 10,
-        mainAxisSpacing: 10,
-        childAspectRatio: 2.5,
-      ),
-      itemCount: accountProvider.accounts.length,
-      itemBuilder: (context, index) {
-        final account = accountProvider.accounts[index];
-        return Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(account.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 5),
-                Text('Tk ${account.balance.toStringAsFixed(2)}', style: const TextStyle(fontSize: 16)),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildMonthlyFlow(double totalIncome, double totalExpense, double netFlow) {
+  Widget _buildAccountStatus(List<Account> accounts) {
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _buildFlowItem('TOTAL INCOME', totalIncome, Colors.green),
-            _buildFlowItem('TOTAL EXPENSE', totalExpense, Colors.red),
-            _buildFlowItem('NET FLOW', netFlow, Colors.blue),
-          ],
-        ),
+      child: ListView.separated(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: accounts.length,
+        itemBuilder: (context, index) {
+          final account = accounts[index];
+          return ListTile(
+            leading: CircleAvatar(child: Text(account.name[0])),
+            title: Text(account.name),
+            trailing: Text(
+              'Tk ${account.balance.toStringAsFixed(2)}',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          );
+        },
+        separatorBuilder: (context, index) => const Divider(height: 1),
       ),
     );
   }
 
-  Widget _buildFlowItem(String title, double amount, Color color) {
+  Widget _buildMonthlyFlowCards(
+    List<Transaction> monthlyTransactions,
+    List<BazarItem> monthlyBazarItems,
+  ) {
+    final totalIncome = monthlyTransactions
+        .where((t) => t.type == TransactionType.income)
+        .fold(0.0, (sum, t) => sum + t.amount);
+
+    final totalTransactionExpenses = monthlyTransactions
+        .where((t) => t.type == TransactionType.expense)
+        .fold(0.0, (sum, t) => sum + t.amount);
+
+    final totalBazarExpenses = monthlyBazarItems.fold(
+      0.0,
+      (sum, i) => sum + i.amount,
+    );
+
+    final totalExpenses = totalTransactionExpenses + totalBazarExpenses;
+
+    final netFlow = totalIncome - totalExpenses;
+
     return Column(
       children: [
-        Text(title, style: TextStyle(fontSize: 12, color: color)),
-        const SizedBox(height: 5),
-        Text('Tk ${amount.toStringAsFixed(2)}', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: color)),
+        Card(
+          color: Colors.green.shade50,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Total Income',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  'Tk ${totalIncome.toStringAsFixed(2)}',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Card(
+          color: Colors.red.shade50,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Total Expenses',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  'Tk ${totalExpenses.toStringAsFixed(2)}',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.red,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Card(
+          color: Colors.blue.shade50,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Net Flow',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  'Tk ${netFlow.toStringAsFixed(2)}',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: netFlow >= 0 ? Colors.blue.shade800 : Colors.red,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildCategoricalBreakdown(Map<String, List<Expense>> categorizedExpenses) {
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: categorizedExpenses.length,
-      itemBuilder: (context, index) {
-        final category = categorizedExpenses.keys.elementAt(index);
-        final expenses = categorizedExpenses[category]!;
-        final categoryTotal = expenses.fold(0.0, (sum, item) => sum + item.amount);
+  Widget _buildExpenseBreakdown(
+    List<Transaction> monthlyTransactions,
+    List<BazarItem> monthlyBazarItems,
+  ) {
+    final expenses = monthlyTransactions
+        .where((t) => t.type == TransactionType.expense)
+        .toList();
+    final expenseMap = groupBy(
+      expenses,
+      (Transaction t) => t.category ?? 'Uncategorized',
+    );
 
-        return Card(
-          margin: const EdgeInsets.symmetric(vertical: 8),
-          child: ExpansionTile(
+    final bazarTotal = monthlyBazarItems.fold(
+      0.0,
+      (sum, item) => sum + item.amount,
+    );
+
+    final categoryTotals = expenseMap.map((key, value) {
+      final total = value.fold(0.0, (sum, t) => sum + t.amount);
+      return MapEntry(key, total);
+    });
+
+    if (bazarTotal > 0) {
+      categoryTotals['Bazar'] = bazarTotal;
+    }
+
+    if (categoryTotals.isEmpty) {
+      return const Card(
+        child: Padding(
+          padding: EdgeInsets.all(16.0),
+          child: Center(child: Text('No expenses recorded for this month.')),
+        ),
+      );
+    }
+
+    final sortedCategories = categoryTotals.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+
+    return Card(
+      child: Column(
+        children: sortedCategories.map((entry) {
+          final categoryName = entry.key;
+          final categoryTotal = entry.value;
+
+          List<Widget> children = [];
+          if (categoryName == 'Bazar') {
+            children = monthlyBazarItems.map((item) {
+              return ListTile(
+                title: Text(item.name),
+                trailing: Text('Tk ${item.amount.toStringAsFixed(2)}'),
+                onTap: () => _showEditDeleteDialog(item),
+              );
+            }).toList();
+          } else {
+            final categoryTransactions = expenseMap[categoryName] ?? [];
+            children = categoryTransactions.map((transaction) {
+              return ListTile(
+                title: Text(transaction.title),
+                trailing: Text('Tk ${transaction.amount.toStringAsFixed(2)}'),
+                onTap: () => _showEditDeleteDialog(transaction),
+              );
+            }).toList();
+          }
+
+          return ExpansionTile(
             title: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(category, style: const TextStyle(fontWeight: FontWeight.bold)),
-                Text('Tk ${categoryTotal.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                const Icon(Icons.circle, size: 10),
+                const SizedBox(width: 10),
+                Text(entry.key),
+                const Spacer(),
+                Text(
+                  'Tk ${entry.value.toStringAsFixed(2)}',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
               ],
             ),
-            children: expenses.map((expense) {
-              return ListTile(
-                title: Text(expense.title),
-                subtitle: Text(DateFormat.yMMMd().format(expense.date)),
-                trailing: Text('Tk ${expense.amount.toStringAsFixed(2)}'),
-              );
-            }).toList(),
-          ),
-        );
-      },
+            children: children,
+          );
+        }).toList(),
+      ),
     );
   }
 }

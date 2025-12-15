@@ -1,5 +1,9 @@
+import 'package:json_annotation/json_annotation.dart';
 import 'package:myapp/models/expense.dart';
 
+part 'bazar_item.g.dart';
+
+@JsonSerializable()
 class BazarItem implements Expense {
   final String id;
   final String name;
@@ -24,4 +28,7 @@ class BazarItem implements Expense {
 
   @override
   String get title => name;
+
+  factory BazarItem.fromJson(Map<String, dynamic> json) => _$BazarItemFromJson(json);
+  Map<String, dynamic> toJson() => _$BazarItemToJson(this);
 }

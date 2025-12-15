@@ -25,4 +25,28 @@ class LoanProvider with ChangeNotifier {
     _loans.add(loan);
     notifyListeners();
   }
+
+  void updateLoanBalance(String loanId, double amount, bool isLent) {
+    final loanIndex = _loans.indexWhere((loan) => loan.id == loanId);
+    if (loanIndex != -1) {
+      final loan = _loans[loanIndex];
+      final newAmount = isLent ? loan.amount + amount : loan.amount - amount;
+      _loans[loanIndex] = loan.copyWith(
+        amount: newAmount,
+        lastActivityDate: DateTime.now(),
+        type: newAmount >= 0 ? LoanType.balance : LoanType.due,
+      );
+      notifyListeners();
+    }
+  }
+
+  double getLoanNetBalance(String loanId) {
+    // This is a simplified calculation. A more robust implementation would
+    // calculate this from the loan transactions.
+    final loan = _loans.firstWhere(
+      (loan) => loan.id == loanId,
+      orElse: () => throw Exception('Loan not found'),
+    );
+    return loan.amount;
+  }
 }

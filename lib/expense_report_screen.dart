@@ -1,54 +1,135 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:myapp/models/account.dart';
+import 'package:myapp/models/bazar_item.dart';
 import 'package:myapp/models/expense.dart';
 import 'package:myapp/models/transaction.dart';
+import 'package:myapp/providers/account_provider.dart';
 import 'package:myapp/providers/bazar_provider.dart';
 import 'package:myapp/providers/transaction_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:collection/collection.dart';
 
-class ExpenseReportScreen extends StatelessWidget {
+class ExpenseReportScreen extends StatefulWidget {
   const ExpenseReportScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final transactionProvider = Provider.of<TransactionProvider>(context);
-    final bazarProvider = Provider.of<BazarProvider>(context);
+  State<ExpenseReportScreen> createState() => _ExpenseReportScreenState();
+}
 
-    // Combine expenses and bazar items
-    final List<Expense> allExpenses = [
-      ...transactionProvider.transactions.where((t) => t.type == TransactionType.expense),
-      ...bazarProvider.items,
-    ];
+class _ExpenseReportScreenState extends State<ExpenseReportScreen> {
+  DateTime _selectedMonth = DateTime.now();
 
-    allExpenses.sort((a, b) => b.date.compareTo(a.date));
+  void _changeMonth(int increment) {
+    setState(() {
+      _selectedMonth = DateTime(
+        _selectedMonth.year,
+        _selectedMonth.month + increment,
+        1,
+      );
+    });
+  }
 
-    // Group items by date
-    final groupedItems = <DateTime, List<Expense>>{};
-    for (var item in allExpenses) {
-      final date = DateTime(item.date.year, item.date.month, item.date.day);
-      if (groupedItems[date] == null) {
-        groupedItems[date] = [];
-      }
-      groupedItems[date]!.add(item);
+  String _getExpenseTitle(Expense expense) {
+    if (expense is Transaction) {
+      return expense.title;
+    } else if (expense is BazarItem) {
+      return expense.name;
     }
+    return 'Unnamed Expense';
+  }
 
-    final totalExpenses = allExpenses.fold(0.0, (sum, item) => sum + item.amount);
+  void _showEditDeleteDialog(Expense expense) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(_getExpenseTitle(expense)),
+        content: const Text('Would you like to edit or delete this item?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              if (expense is Transaction) {
+                _showEditTransactionDialog(expense);
+              } else if (expense is BazarItem) {
+                _showEditBazarItemDialog(expense);
+              }
+            },
+            child: const Text('Edit'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _showDeleteConfirmationDialog(expense);
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
 
-    return SingleChildScrollView(
-      child: Padding(
+  void _showEditTransactionDialog(Transaction transaction) {
+    // Similar to the edit dialog in history_screen.dart
+  }
+
+  void _showEditBazarItemDialog(BazarItem item) {
+    // Similar to the edit dialog in bazar_screen.dart
+  }
+
+  void _showDeleteConfirmationDialog(Expense expense) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Item'),
+        content: const Text('Are you sure you want to delete this item?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (expense is Transaction) {
+                Provider.of<TransactionProvider>(
+                  context,
+                  listen: false,
+                ).deleteTransaction(expense.id);
+              } else if (expense is BazarItem) {
+                Provider.of<BazarProvider>(
+                  context,
+                  listen: false,
+                ).deleteItem(expense);
+              }
+              Navigator.of(context).pop();
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildMonthSelector(),
             const SizedBox(height: 20),
-            _buildExpenseReportHeader(),
+            _buildTotalSpentCard(),
             const SizedBox(height: 20),
-            _buildTotalExpensesCard(totalExpenses),
+            _buildCategoryBreakdown(),
             const SizedBox(height: 20),
-            const Text('Daily Breakdown', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 10),
-            _buildDailyBreakdown(groupedItems),
+            Expanded(child: _buildDailyBreakdown()),
           ],
         ),
       ),
@@ -59,110 +140,204 @@ class ExpenseReportScreen extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        IconButton(icon: const Icon(Icons.arrow_back_ios, size: 16), onPressed: () {}),
-        Text(DateFormat('MMMM yyyy').format(DateTime.now()), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-        IconButton(icon: const Icon(Icons.arrow_forward_ios, size: 16), onPressed: () {}),
+        IconButton(
+          icon: const Icon(Icons.arrow_back_ios),
+          onPressed: () => _changeMonth(-1),
+        ),
+        Text(
+          DateFormat.yMMMM().format(_selectedMonth),
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        IconButton(
+          icon: const Icon(Icons.arrow_forward_ios),
+          onPressed: () => _changeMonth(1),
+        ),
       ],
     );
   }
 
-  Widget _buildExpenseReportHeader() {
-    return Row(children: [
-      Icon(Icons.pie_chart, color: Colors.deepPurple[300]),
-      const SizedBox(width: 10),
-      const Text('Expense Report', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-    ]);
-  }
+  Widget _buildTotalSpentCard() {
+    final transactionProvider = Provider.of<TransactionProvider>(
+      context,
+      listen: false,
+    );
+    final bazarProvider = Provider.of<BazarProvider>(context, listen: false);
 
-  Widget _buildTotalExpensesCard(double totalExpenses) {
+    final List<Expense> allExpenses = [
+      ...transactionProvider.transactions.where(
+        (t) => t.type == TransactionType.expense,
+      ),
+      ...bazarProvider.items,
+    ];
+
+    final monthlyExpenses = allExpenses.where(
+      (expense) =>
+          expense.date.month == _selectedMonth.month &&
+          expense.date.year == _selectedMonth.year,
+    );
+
+    final totalSpent = monthlyExpenses.fold(
+      0.0,
+      (sum, item) => sum + item.amount,
+    );
+
     return Card(
-      color: Colors.deepPurple.withOpacity(0.1),
       child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Center(
-          child: Column(
-            children: [
-              Text('TOTAL EXPENSES', style: TextStyle(color: Colors.deepPurple[800], fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              Text('Tk ${totalExpenses.toStringAsFixed(2)}', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.deepPurple[800])),
-            ],
-          ),
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            const Text(
+              'Total Spent This Month',
+              style: TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Tk ${totalSpent.toStringAsFixed(2)}',
+              style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildDailyBreakdown(Map<DateTime, List<Expense>> groupedItems) {
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: groupedItems.length,
-      itemBuilder: (context, index) {
-        final date = groupedItems.keys.elementAt(index);
-        final items = groupedItems[date]!;
-        final dailyTotal = items.fold(0.0, (sum, item) => sum + item.amount);
+  Widget _buildCategoryBreakdown() {
+    final transactionProvider = Provider.of<TransactionProvider>(
+      context,
+      listen: false,
+    );
+    final bazarProvider = Provider.of<BazarProvider>(context, listen: false);
 
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 16.0),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildDateCard(date),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+    final List<Expense> allExpenses = [
+      ...transactionProvider.transactions.where(
+        (t) => t.type == TransactionType.expense,
+      ),
+      ...bazarProvider.items,
+    ];
+
+    final monthlyExpenses = allExpenses.where(
+      (expense) =>
+          expense.date.month == _selectedMonth.month &&
+          expense.date.year == _selectedMonth.year,
+    );
+
+    final expensesByCategory = groupBy(
+      monthlyExpenses,
+      (Expense expense) => expense.category,
+    );
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Expense by Category',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+            ...expensesByCategory.entries.map((entry) {
+              final category = entry.key;
+              final expenses = entry.value;
+              final categoryTotal = expenses.fold(
+                0.0,
+                (sum, item) => sum + item.amount,
+              );
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(DateFormat.EEEE().format(date), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                        Text('Tk ${dailyTotal.toStringAsFixed(2)}', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.deepPurple[800])),
-                      ],
-                    ),
-                    Text('${items.length} items', style: const TextStyle(color: Colors.grey)),
-                    const SizedBox(height: 10),
-                    ...items.asMap().entries.map((entry) {
-                      final idx = entry.key;
-                      final item = entry.value;
-                      final title = item.title;
-                      final amount = item.amount;
-
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 8.0),
-                        child: Row(
-                          children: [
-                            Text('${idx + 1}.'),
-                            const SizedBox(width: 8),
-                            Expanded(child: Text(title)),
-                            Text('Tk ${amount.toStringAsFixed(2)}'),
-                          ],
-                        ),
-                      );
-                    }),
+                    Text(category ?? 'Uncategorized'),
+                    Text('Tk ${categoryTotal.toStringAsFixed(2)}'),
                   ],
                 ),
-              ),
-            ],
-          ),
-        );
-      },
+              );
+            }),
+          ],
+        ),
+      ),
     );
   }
 
-  Widget _buildDateCard(DateTime date) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.grey[200],
-        borderRadius: BorderRadius.circular(8),
+  Widget _buildDailyBreakdown() {
+    final transactionProvider = Provider.of<TransactionProvider>(
+      context,
+      listen: false,
+    );
+    final bazarProvider = Provider.of<BazarProvider>(context, listen: false);
+
+    final List<Expense> allExpenses = [
+      ...transactionProvider.transactions.where(
+        (t) => t.type == TransactionType.expense,
       ),
-      child: Column(
-        children: [
-          Text(DateFormat.d().format(date), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-          Text(DateFormat.E().format(date).toUpperCase(), style: const TextStyle(fontSize: 12)),
-        ],
-      ),
+      ...bazarProvider.items,
+    ];
+
+    final monthlyItems = allExpenses
+        .where(
+          (item) =>
+              item.date.month == _selectedMonth.month &&
+              item.date.year == _selectedMonth.year,
+        )
+        .toList();
+
+    if (monthlyItems.isEmpty) {
+      return const Center(child: Text('No expenses recorded for this month.'));
+    }
+
+    monthlyItems.sort((a, b) => b.date.compareTo(a.date));
+
+    final groupedItems = groupBy(
+      monthlyItems,
+      (Expense item) => DateFormat('yyyy-MM-dd').format(item.date),
+    );
+
+    return ListView.builder(
+      itemCount: groupedItems.length,
+      itemBuilder: (context, index) {
+        final dateString = groupedItems.keys.elementAt(index);
+        final dailyItems = groupedItems[dateString]!;
+
+        final dailyTotal = dailyItems.fold(
+          0.0,
+          (sum, item) => sum + item.amount,
+        );
+        final formattedDate = DateFormat.yMMMMd().format(
+          DateTime.parse(dateString),
+        );
+
+        return Card(
+          margin: const EdgeInsets.symmetric(vertical: 8.0),
+          child: ExpansionTile(
+            title: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    formattedDate,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Text(
+                  'Total: Tk ${dailyTotal.toStringAsFixed(2)}',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            children: dailyItems.map((item) {
+              return ListTile(
+                title: Text(_getExpenseTitle(item)),
+                subtitle: Text(DateFormat.yMMMd().add_jm().format(item.date)),
+                trailing: Text('Tk ${item.amount.toStringAsFixed(2)}'),
+                onTap: () => _showEditDeleteDialog(item),
+              );
+            }).toList(),
+          ),
+        );
+      },
     );
   }
 }

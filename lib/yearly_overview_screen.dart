@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../providers/account_provider.dart';
 import '../providers/transaction_provider.dart';
@@ -13,15 +14,25 @@ class YearlyOverviewScreen extends StatelessWidget {
     final accounts = Provider.of<AccountProvider>(context).accounts;
     final transactions = Provider.of<TransactionProvider>(context).transactions;
 
-    final double totalIn = transactions.where((t) => t.type == TransactionType.income).fold(0, (sum, t) => sum + t.amount);
-    final double totalOut = transactions.where((t) => t.type == TransactionType.expense).fold(0, (sum, t) => sum + t.amount);
+    final double totalIn = transactions
+        .where((t) => t.type == TransactionType.income)
+        .fold(0, (sum, t) => sum + t.amount);
+    final double totalOut = transactions
+        .where((t) => t.type == TransactionType.expense)
+        .fold(0, (sum, t) => sum + t.amount);
     final double netFlow = totalIn - totalOut;
     final double savingsRate = totalIn > 0 ? (netFlow / totalIn) * 100 : 0;
 
     // Data for the pie chart
     final expenseByCategory = <String, double>{};
-    for (var t in transactions.where((t) => t.type == TransactionType.expense)) {
-      expenseByCategory.update(t.category, (value) => value + t.amount, ifAbsent: () => t.amount);
+    for (var t in transactions.where(
+      (t) => t.type == TransactionType.expense,
+    )) {
+      expenseByCategory.update(
+        t.category,
+        (value) => value + t.amount,
+        ifAbsent: () => t.amount,
+      );
     }
 
     final pieChartSections = expenseByCategory.entries.map((entry) {
@@ -39,9 +50,11 @@ class YearlyOverviewScreen extends StatelessWidget {
       final month = t.date.month;
       monthlyActivity.putIfAbsent(month, () => {'income': 0, 'expense': 0});
       if (t.type == TransactionType.income) {
-        monthlyActivity[month]!['income'] = monthlyActivity[month]!['income']! + t.amount;
+        monthlyActivity[month]!['income'] =
+            monthlyActivity[month]!['income']! + t.amount;
       } else {
-        monthlyActivity[month]!['expense'] = monthlyActivity[month]!['expense']! + t.amount;
+        monthlyActivity[month]!['expense'] =
+            monthlyActivity[month]!['expense']! + t.amount;
       }
     }
 
@@ -49,15 +62,32 @@ class YearlyOverviewScreen extends StatelessWidget {
       return BarChartGroupData(
         x: entry.key,
         barRods: [
-          BarChartRodData(toY: entry.value['income']!, color: Colors.green, width: 16),
-          BarChartRodData(toY: entry.value['expense']!, color: Colors.red, width: 16),
+          BarChartRodData(
+            toY: entry.value['income']!,
+            color: Colors.green,
+            width: 16,
+          ),
+          BarChartRodData(
+            toY: entry.value['expense']!,
+            color: Colors.red,
+            width: 16,
+          ),
         ],
       );
     }).toList();
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Yearly Overview'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => context.pop(),
+        ),
+        title: const Text(
+          'Yearly Overview',
+          style: TextStyle(color: Colors.black, fontSize: 16),
+        ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -78,11 +108,17 @@ class YearlyOverviewScreen extends StatelessWidget {
               itemCount: accounts.length,
               itemBuilder: (context, index) {
                 final account = accounts[index];
-                return AccountCard(name: account.name, balance: account.balance);
+                return AccountCard(
+                  name: account.name,
+                  balance: account.balance,
+                );
               },
             ),
             const SizedBox(height: 20),
-            const Text('THIS YEAR FLOW', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+            const Text(
+              'THIS YEAR FLOW',
+              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey),
+            ),
             const SizedBox(height: 10),
             GridView.count(
               shrinkWrap: true,
@@ -92,14 +128,38 @@ class YearlyOverviewScreen extends StatelessWidget {
               mainAxisSpacing: 10,
               childAspectRatio: 2,
               children: [
-                SummaryCard(title: 'Net Flow', amount: netFlow, color: Colors.blue, icon: Icons.show_chart),
-                SummaryCard(title: 'Total In', amount: totalIn, color: Colors.green, icon: Icons.arrow_upward),
-                SummaryCard(title: 'Total Out', amount: totalOut, color: Colors.red, icon: Icons.arrow_downward),
-                SummaryCard(title: 'Savings Rate', amount: savingsRate, color: Colors.orange, icon: Icons.savings, isPercentage: true),
+                SummaryCard(
+                  title: 'Net Flow',
+                  amount: netFlow,
+                  color: Colors.blue,
+                  icon: Icons.show_chart,
+                ),
+                SummaryCard(
+                  title: 'Total In',
+                  amount: totalIn,
+                  color: Colors.green,
+                  icon: Icons.arrow_upward,
+                ),
+                SummaryCard(
+                  title: 'Total Out',
+                  amount: totalOut,
+                  color: Colors.red,
+                  icon: Icons.arrow_downward,
+                ),
+                SummaryCard(
+                  title: 'Savings Rate',
+                  amount: savingsRate,
+                  color: Colors.orange,
+                  icon: Icons.savings,
+                  isPercentage: true,
+                ),
               ],
             ),
             const SizedBox(height: 20),
-            const Text('Expense Breakdown', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+            const Text(
+              'Expense Breakdown',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            ),
             const SizedBox(height: 10),
             SizedBox(
               height: 200,
@@ -119,7 +179,11 @@ class YearlyOverviewScreen extends StatelessWidget {
                 return Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Container(width: 10, height: 10, color: _getCategoryColor(category)),
+                    Container(
+                      width: 10,
+                      height: 10,
+                      color: _getCategoryColor(category),
+                    ),
                     const SizedBox(width: 4),
                     Text(category),
                   ],
@@ -127,7 +191,10 @@ class YearlyOverviewScreen extends StatelessWidget {
               }).toList(),
             ),
             const SizedBox(height: 20),
-            const Text('Monthly Activity', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+            const Text(
+              'Monthly Activity',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            ),
             const SizedBox(height: 10),
             SizedBox(
               height: 200,
@@ -136,9 +203,13 @@ class YearlyOverviewScreen extends StatelessWidget {
                   barGroups: barChartGroups,
                   borderData: FlBorderData(show: false),
                   gridData: const FlGridData(show: false),
-                   titlesData: FlTitlesData(
-                    leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  titlesData: FlTitlesData(
+                    leftTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    topTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
                     bottomTitles: AxisTitles(
                       sideTitles: SideTitles(
                         showTitles: true,
@@ -146,19 +217,45 @@ class YearlyOverviewScreen extends StatelessWidget {
                           const style = TextStyle(fontSize: 10);
                           String text;
                           switch (value.toInt()) {
-                            case 1: text = 'Jan'; break;
-                            case 2: text = 'Feb'; break;
-                            case 3: text = 'Mar'; break;
-                            case 4: text = 'Apr'; break;
-                            case 5: text = 'May'; break;
-                            case 6: text = 'Jun'; break;
-                            case 7: text = 'Jul'; break;
-                            case 8: text = 'Aug'; break;
-                            case 9: text = 'Sep'; break;
-                            case 10: text = 'Oct'; break;
-                            case 11: text = 'Nov'; break;
-                            case 12: text = 'Dec'; break;
-                            default: text = ''; break;
+                            case 1:
+                              text = 'Jan';
+                              break;
+                            case 2:
+                              text = 'Feb';
+                              break;
+                            case 3:
+                              text = 'Mar';
+                              break;
+                            case 4:
+                              text = 'Apr';
+                              break;
+                            case 5:
+                              text = 'May';
+                              break;
+                            case 6:
+                              text = 'Jun';
+                              break;
+                            case 7:
+                              text = 'Jul';
+                              break;
+                            case 8:
+                              text = 'Aug';
+                              break;
+                            case 9:
+                              text = 'Sep';
+                              break;
+                            case 10:
+                              text = 'Oct';
+                              break;
+                            case 11:
+                              text = 'Nov';
+                              break;
+                            case 12:
+                              text = 'Dec';
+                              break;
+                            default:
+                              text = '';
+                              break;
                           }
                           return Text(text, style: style);
                         },
@@ -182,20 +279,36 @@ class YearlyOverviewScreen extends StatelessWidget {
                     children: [
                       Icon(Icons.auto_awesome, color: Colors.white),
                       SizedBox(width: 8),
-                      Text('AI Financial Advisor', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                      Text(
+                        'AI Financial Advisor',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 8),
-                  const Text('Get personalized insights about your spending habits and savings opportunities powered by Gemini AI.', style: TextStyle(color: Colors.white70)),
+                  const Text(
+                    'Get personalized insights about your spending habits and savings opportunities powered by Gemini AI.',
+                    style: TextStyle(color: Colors.white70),
+                  ),
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () {},
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Colors.deepPurple, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.deepPurple,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
                     child: const Text('Generate Insights'),
                   ),
                 ],
               ),
-            )
+            ),
           ],
         ),
       ),
@@ -275,7 +388,9 @@ class SummaryCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              isPercentage ? '${amount.toStringAsFixed(2)}%' : 'Tk ${amount.toStringAsFixed(2)}',
+              isPercentage
+                  ? '${amount.toStringAsFixed(2)}%'
+                  : 'Tk ${amount.toStringAsFixed(2)}',
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
             ),
           ],

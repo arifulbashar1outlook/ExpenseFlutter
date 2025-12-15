@@ -2,11 +2,51 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:uuid/uuid.dart';
 import '../models/loan.dart';
 import '../providers/loan_provider.dart';
 
 class LendingManagerScreen extends StatelessWidget {
   const LendingManagerScreen({super.key});
+
+  void _addLoan(BuildContext context) {
+    final nameController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Add New Person'),
+        content: TextField(
+          controller: nameController,
+          decoration: const InputDecoration(hintText: 'Person Name'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (nameController.text.isNotEmpty) {
+                final newLoan = Loan(
+                  id: const Uuid().v4(),
+                  personName: nameController.text,
+                  amount: 0,
+                  type: LoanType.balance,
+                  lastActivityDate: DateTime.now(),
+                );
+                Provider.of<LoanProvider>(
+                  context,
+                  listen: false,
+                ).addLoan(newLoan);
+                Navigator.of(context).pop();
+              }
+            },
+            child: const Text('Add'),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -15,12 +55,14 @@ class LendingManagerScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Lending Manager'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.pop(),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.add, color: Colors.orange),
-            onPressed: () {
-              // TODO: Implement add loan functionality
-            },
+            onPressed: () => _addLoan(context),
           ),
         ],
       ),
@@ -29,7 +71,10 @@ class LendingManagerScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Track loans and repayments', style: TextStyle(color: Colors.grey)),
+            const Text(
+              'Track loans and repayments',
+              style: TextStyle(color: Colors.grey),
+            ),
             const SizedBox(height: 20),
             TextField(
               decoration: InputDecoration(
@@ -52,18 +97,23 @@ class LendingManagerScreen extends StatelessWidget {
                   return Card(
                     margin: const EdgeInsets.symmetric(vertical: 8.0),
                     child: ListTile(
-                      leading: CircleAvatar(
-                        child: Text(loan.personName[0]),
+                      leading: CircleAvatar(child: Text(loan.personName[0])),
+                      title: Text(
+                        loan.personName,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
-                      title: Text(loan.personName, style: const TextStyle(fontWeight: FontWeight.bold)),
-                      subtitle: Text('Last: ${DateFormat.yMd().format(loan.lastActivityDate)}'),
+                      subtitle: Text(
+                        'Last: ${DateFormat.yMd().format(loan.lastActivityDate)}',
+                      ),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
                             'TK ${loan.amount.toStringAsFixed(2)}',
                             style: TextStyle(
-                              color: loan.type == LoanType.due ? Colors.red : Colors.green,
+                              color: loan.type == LoanType.due
+                                  ? Colors.red
+                                  : Colors.green,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -71,7 +121,9 @@ class LendingManagerScreen extends StatelessWidget {
                           Text(
                             loan.type == LoanType.due ? '(Due)' : '(Balance)',
                             style: TextStyle(
-                              color: loan.type == LoanType.due ? Colors.red : Colors.green,
+                              color: loan.type == LoanType.due
+                                  ? Colors.red
+                                  : Colors.green,
                               fontSize: 12,
                             ),
                           ),
