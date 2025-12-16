@@ -7,7 +7,7 @@ enum TransactionType { income, expense }
 
 @JsonSerializable()
 class Transaction implements Expense {
-  final String id;
+  String id;
   @override
   final String title;
   @override
@@ -29,6 +29,7 @@ class Transaction implements Expense {
     String? category,
   }) : category = category ?? 'Other';
 
-  factory Transaction.fromJson(Map<String, dynamic> json) => _$TransactionFromJson(json);
+  factory Transaction.fromJson(Map<String, dynamic> json) =>
+      _$TransactionFromJson(json);
   Map<String, dynamic> toJson() => _$TransactionToJson(this);
 }

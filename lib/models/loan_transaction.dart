@@ -24,6 +24,7 @@ class LoanTransaction {
     required this.accountId,
   });
 
-  factory LoanTransaction.fromJson(Map<String, dynamic> json) => _$LoanTransactionFromJson(json);
+  factory LoanTransaction.fromJson(Map<String, dynamic> json) =>
+      _$LoanTransactionFromJson(json);
   Map<String, dynamic> toJson() => _$LoanTransactionToJson(this);
 }

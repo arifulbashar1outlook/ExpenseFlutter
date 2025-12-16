@@ -5,7 +5,7 @@ part 'bazar_item.g.dart';
 
 @JsonSerializable()
 class BazarItem implements Expense {
-  final String id;
+  String id;
   final String name;
   final double cost;
   @override
@@ -29,6 +29,7 @@ class BazarItem implements Expense {
   @override
   String get title => name;
 
-  factory BazarItem.fromJson(Map<String, dynamic> json) => _$BazarItemFromJson(json);
+  factory BazarItem.fromJson(Map<String, dynamic> json) =>
+      _$BazarItemFromJson(json);
   Map<String, dynamic> toJson() => _$BazarItemToJson(this);
 }

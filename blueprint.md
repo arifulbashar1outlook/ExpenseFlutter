@@ -1,30 +1,66 @@
-# Project Blueprint
+# Paisa Manager - Your Personal Finance Companion
 
-## Overview
+**Paisa Manager** is a comprehensive mobile application built with Flutter that empowers you to take control of your finances. It provides a user-friendly interface to track your income, expenses, and loans, helping you make informed financial decisions and achieve your financial goals.
 
-This document outlines the style, design, and features of the SmartSpend application. It serves as a single source of truth for the application's current state and future development.
+## Key Features:
 
-## Style and Design
+*   **Income and Expense Tracking:** Easily record your daily transactions, categorize them, and monitor your spending habits.
+*   **Bazar/Grocery Management:** Keep a detailed list of your grocery expenses, making it easy to manage your household budget.
+*   **Loan and Lending Management:** Track money you've borrowed or lent, with details on amounts, dates, and repayment status.
+*   **Financial Reports:** Generate insightful reports to understand your financial health, including monthly and yearly summaries.
+*   **Account Management:** Manage multiple accounts, such as cash, bank accounts, and digital wallets.
+*   **Dark Mode:** Enjoy a comfortable viewing experience in low-light environments.
+*   **Cross-Platform:** Available on both Android and iOS devices.
 
-- **Theme:** The application uses a modern, clean design with both light and dark modes.
-- **Typography:** The `inter` font from Google Fonts is used throughout the application.
-- **Color Scheme:** The primary color is deep purple, with a light grey background in light mode and a dark grey background in dark mode.
+## App Architecture
 
-## Features
+The app follows a clean and scalable architecture, leveraging the following:
 
-### Core Features
+*   **Provider:** For state management, ensuring a clear separation of concerns between the UI and business logic.
+*   **GoRouter:** For declarative routing, providing a robust and flexible navigation system.
+*   **Firebase:** For backend services, including authentication and database.
 
-- **Transaction Management:** Users can add, edit, and delete income and expense transactions.
-- **Account Management:** Users can create and manage multiple accounts (e.g., cash, bank, credit card).
-- **Budgeting:** Users can set monthly budgets for different categories and track their spending against those budgets.
-- **Reporting:** The application provides various reports, including monthly and yearly overviews, expense reports, and bazar reports.
+## Current Task: Refactoring and Code Cleanup
 
-### Lending Manager
+This update focused on a comprehensive cleanup of the codebase to improve its quality, maintainability, and ensure compliance with the latest Dart and Flutter standards. All warnings from the Dart analyzer have been systematically addressed, and the project structure has been improved.
 
-- **Lending and Repayment Tracking:** The lending manager allows users to track money they have lent to others and repayments they have received. This feature is integrated with the main transaction list, so all financial activities are in one place.
-- **Contact Management:** Users can add and manage contacts for lending and borrowing.
-- **Net Balance:** The lending manager displays the net balance for each contact, so users always know the outstanding amount.
+### Changes Made:
 
-## Current Plan
+*   **Resolved Analysis Issues:** Addressed all warnings from the `flutter analyze` command, including:
+    *   Fixed `library_private_types_in_public_api` warnings.
+    *   Replaced the deprecated `value` property with `initialValue` in `DropdownButtonFormField`.
+    *   Corrected `use_build_context_synchronously` warnings by ensuring `BuildContext` is not used across async gaps.
+    *   Removed all `unused_import` statements.
+    *   Fixed `unrelated_type_equality_checks`.
+    *   Resolved `argument_type_not_assignable` errors.
+*   **Formatted Code:** Ran `dart format .` across the entire project to ensure consistent styling.
+*   **Deleted Unused File:** Removed the `lib/screens/test_screen.dart` file as it was no longer needed.
+*   **Updated Project Structure:** Refactored the file structure for better organization.
 
-- Added back functionality to the monthly and yearly overview screens.
+## Getting Started
+
+1.  **Clone the repository:**
+
+    ```bash
+    git clone https://github.com/your-username/paisa-manager.git
+    ```
+
+2.  **Install dependencies:**
+
+    ```bash
+    flutter pub get
+    ```
+
+3.  **Run the app:**
+
+    ```bash
+    flutter run
+    ```
+
+## Contributing
+
+We welcome contributions from the community! If you have any ideas, a bug to report, or a feature to request, please open an issue or submit a pull request.
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.

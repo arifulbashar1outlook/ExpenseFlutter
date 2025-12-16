@@ -10,79 +10,55 @@ class CustomDrawer extends StatelessWidget {
       child: ListView(
         padding: EdgeInsets.zero,
         children: <Widget>[
-          _buildDrawerHeader(),
-          _buildDrawerItem(
-            context,
-            icon: Icons.manage_accounts,
-            text: 'Manage Accounts',
-            route: '/manage-accounts',
+          const DrawerHeader(
+            decoration: BoxDecoration(color: Colors.deepPurple),
+            child: Text(
+              'Paisa Manager',
+              style: TextStyle(color: Colors.white, fontSize: 24),
+            ),
           ),
-          _buildDrawerItem(
-            context,
-            icon: Icons.dark_mode,
-            text: 'Dark Mode',
-            route: '/dark-mode',
+          ListTile(
+            leading: const Icon(Icons.add),
+            title: const Text('Input'),
+            onTap: () => context.go('/'),
           ),
-          _buildDrawerItem(
-            context,
-            icon: Icons.settings,
-            text: 'Settings',
-            route: '/settings',
+          ListTile(
+            leading: const Icon(Icons.history),
+            title: const Text('History'),
+            onTap: () => context.go('/history'),
           ),
-          _buildDrawerItem(
-            context,
-            icon: Icons.real_estate_agent,
-            text: 'Lending Manager',
-            route: '/lending-manager',
+          ListTile(
+            leading: const Icon(Icons.shopping_cart),
+            title: const Text('Bazar'),
+            onTap: () => context.go('/bazar'),
           ),
-          _buildDrawerItem(
-            context,
-            icon: Icons.calendar_today,
-            text: 'Monthly Overview',
-            route: '/monthly-overview',
+          ListTile(
+            leading: const Icon(Icons.receipt),
+            title: const Text('Bazar Report'),
+            onTap: () => context.go('/bazar-report'),
           ),
-          _buildDrawerItem(
-            context,
-            icon: Icons.calendar_view_day,
-            text: 'Yearly Overview',
-            route: '/yearly-overview',
+          ListTile(
+            leading: const Icon(Icons.pie_chart),
+            title: const Text('Monthly Report'),
+            onTap: () => context.go('/full-monthly-report'),
           ),
-          const Divider(),
-          _buildDrawerItem(
-            context,
-            icon: Icons.logout,
-            text: 'Sign Out',
-            route: '/sign-out',
+          ListTile(
+            leading: const Icon(Icons.swap_horiz),
+            title: const Text('Lending Manager'),
+            onTap: () => context.go('/lending-manager'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.account_balance_wallet),
+            title: const Text('Manage Accounts'),
+            onTap: () => context.go('/manage-accounts'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.settings),
+            title: const Text('Settings'),
+            onTap: () => context.go('/settings'),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildDrawerHeader() {
-    return const UserAccountsDrawerHeader(
-      accountName: Text('Ariful Bashar (Arif)'),
-      accountEmail: Text('arifulbashar1@gmail.com'),
-      currentAccountPicture: CircleAvatar(
-        backgroundImage: NetworkImage(
-          'https://avatars.githubusercontent.com/u/1342004?v=4',
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDrawerItem(
-    BuildContext context, {
-    required IconData icon,
-    required String text,
-    required String route,
-  }) {
-    return ListTile(
-      leading: Icon(icon),
-      title: Text(text),
-      onTap: () {
-        context.go(route);
-      },
     );
   }
 }

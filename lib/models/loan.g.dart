@@ -10,16 +10,21 @@ Loan _$LoanFromJson(Map<String, dynamic> json) => Loan(
   id: json['id'] as String,
   personName: json['personName'] as String,
   amount: (json['amount'] as num).toDouble(),
-  lastActivityDate: DateTime.parse(json['lastActivityDate'] as String),
   type: $enumDecode(_$LoanTypeEnumMap, json['type']),
+  date: DateTime.parse(json['date'] as String),
+  isSettled: json['isSettled'] as bool? ?? false,
 );
 
 Map<String, dynamic> _$LoanToJson(Loan instance) => <String, dynamic>{
   'id': instance.id,
   'personName': instance.personName,
   'amount': instance.amount,
-  'lastActivityDate': instance.lastActivityDate.toIso8601String(),
   'type': _$LoanTypeEnumMap[instance.type]!,
+  'date': instance.date.toIso8601String(),
+  'isSettled': instance.isSettled,
 };
 
-const _$LoanTypeEnumMap = {LoanType.due: 'due', LoanType.balance: 'balance'};
+const _$LoanTypeEnumMap = {
+  LoanType.lent: 'lent',
+  LoanType.borrowed: 'borrowed',
+};
