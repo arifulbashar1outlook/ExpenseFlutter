@@ -9,6 +9,7 @@ plugins {
 }
 
 android {
+    setProperty("archivesBaseName", "ExpenseFlutter")
     namespace = "com.example.myapp"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
