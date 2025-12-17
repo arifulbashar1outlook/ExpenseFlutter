@@ -1,66 +1,31 @@
-# Paisa Manager - Your Personal Finance Companion
+# Spend Smart - Personal Finance Tracker
 
-**Paisa Manager** is a comprehensive mobile application built with Flutter that empowers you to take control of your finances. It provides a user-friendly interface to track your income, expenses, and loans, helping you make informed financial decisions and achieve your financial goals.
+## Overview
 
-## Key Features:
+Spend Smart is a Flutter application designed to help users track their income and expenses. It provides a clear overview of financial transactions, allows users to manage different accounts, and leverages generative AI with Gemini to provide summaries of their spending habits.
 
-*   **Income and Expense Tracking:** Easily record your daily transactions, categorize them, and monitor your spending habits.
-*   **Bazar/Grocery Management:** Keep a detailed list of your grocery expenses, making it easy to manage your household budget.
-*   **Loan and Lending Management:** Track money you've borrowed or lent, with details on amounts, dates, and repayment status.
-*   **Financial Reports:** Generate insightful reports to understand your financial health, including monthly and yearly summaries.
-*   **Account Management:** Manage multiple accounts, such as cash, bank accounts, and digital wallets.
-*   **Dark Mode:** Enjoy a comfortable viewing experience in low-light environments.
-*   **Cross-Platform:** Available on both Android and iOS devices.
+## Features & Design
 
-## App Architecture
+### Core Functionality
+- **Transaction Management:** Users can add, view, and categorize income and expense transactions.
+- **Account Management:** Users can create and manage multiple financial accounts (e.g., checking, savings).
+- **Local Storage:** All data is persisted locally on the device using `shared_preferences`.
 
-The app follows a clean and scalable architecture, leveraging the following:
+### AI-Powered Insights
+- **Financial Summary:** The application uses the Gemini AI model via the `firebase_ai` package to generate natural language summaries of the user's financial activity.
 
-*   **Provider:** For state management, ensuring a clear separation of concerns between the UI and business logic.
-*   **GoRouter:** For declarative routing, providing a robust and flexible navigation system.
-*   **Firebase:** For backend services, including authentication and database.
+### Visual Design & Theming
+- **Theme:** The app features a modern, consistent theme for both light and dark modes.
+- **Color Scheme:** A defined color palette is used for branding and to differentiate between income (green) and expenses (red).
+- **Typography:** The app will use the `google_fonts` package for clean and readable typography.
 
-## Current Task: Refactoring and Code Cleanup
+## Current Plan
 
-This update focused on a comprehensive cleanup of the codebase to improve its quality, maintainability, and ensure compliance with the latest Dart and Flutter standards. All warnings from the Dart analyzer have been systematically addressed, and the project structure has been improved.
+The application is currently in a broken state due to multiple configuration and code errors. The following steps will be taken to get the application to a runnable state.
 
-### Changes Made:
-
-*   **Resolved Analysis Issues:** Addressed all warnings from the `flutter analyze` command, including:
-    *   Fixed `library_private_types_in_public_api` warnings.
-    *   Replaced the deprecated `value` property with `initialValue` in `DropdownButtonFormField`.
-    *   Corrected `use_build_context_synchronously` warnings by ensuring `BuildContext` is not used across async gaps.
-    *   Removed all `unused_import` statements.
-    *   Fixed `unrelated_type_equality_checks`.
-    *   Resolved `argument_type_not_assignable` errors.
-*   **Formatted Code:** Ran `dart format .` across the entire project to ensure consistent styling.
-*   **Deleted Unused File:** Removed the `lib/screens/test_screen.dart` file as it was no longer needed.
-*   **Updated Project Structure:** Refactored the file structure for better organization.
-
-## Getting Started
-
-1.  **Clone the repository:**
-
-    ```bash
-    git clone https://github.com/your-username/paisa-manager.git
-    ```
-
-2.  **Install dependencies:**
-
-    ```bash
-    flutter pub get
-    ```
-
-3.  **Run the app:**
-
-    ```bash
-    flutter run
-    ```
-
-## Contributing
-
-We welcome contributions from the community! If you have any ideas, a bug to report, or a feature to request, please open an issue or submit a pull request.
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
+1.  **Add `firebase_ai` Dependency:** The `pubspec.yaml` file is missing the `firebase_ai` package, which is required for the Gemini integration.
+2.  **Create Theming Constants:** The color constants used in the `AppTheme` are undefined. I will create a new file `lib/core/constants/app_constants.dart` to define these.
+3.  **Implement Local Storage Methods:** The `LocalStorageService` is missing the implementation for saving and retrieving account and transaction data. I will implement these methods.
+4.  **Fix UI Code:** There is a string formatting error in the `TransactionList` widget that needs to be corrected.
+5.  **Correct Model Instantiation:** The code for creating new `Account` and `Transaction` objects is missing required parameters (`id` and `accountId`). This will be fixed.
+6.  **Resolve Imports & Dependencies:** I will run `flutter pub get` and then `flutter run` to verify the fixes.
